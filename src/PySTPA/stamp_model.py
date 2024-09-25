@@ -67,7 +67,7 @@ class STAMPModel(DataClassJsonMixin):
             return cls.from_json(f.read())
 
     def get_longest_line_num(self, lines: list[str]):
-        return max(len(line) for line in lines)
+        return max(len(line.encode("utf8")) for line in lines)
 
     @property
     def blocks(self):
@@ -151,6 +151,7 @@ class STAMPModel(DataClassJsonMixin):
                         self.graph.nodes[block.name]["label"].splitlines()
                     )
                     * 14.0
+                    * 0.5
                     * 1.1
                     / 72
                 )

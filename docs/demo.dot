@@ -1,0 +1,21 @@
+strict digraph  {
+graph [dpi=600];
+edge [fontname=SimHei];
+node [fontname=SimHei];
+Controller [label="Controller\nControl system of plane\nCould handle 特殊字符\nStatus\nCheck", pos="3, 4!", shape=box, fixedsize=True, height=1.25, width=2.6736111111111116];
+Elevator [label="Actuator\nThe elevator of plane\n", pos="0, 2!", shape=box, fixedsize=True, height=0.5, width=2.2458333333333336];
+Altimeter [label="Sensor\nThe sensor feeding back altitude\n", pos="6, 2!", shape=box, fixedsize=True, height=0.5, width=3.4222222222222225];
+"Plane Flying" [label="Process\nThe process of plane flying\n", pos="3, 0!", shape=box, fixedsize=True, height=0.5, width=2.8875];
+aux_nw [label="", pos="0, 4!", fixedsize=True, width=0.0, height=0.0];
+aux_sw [label="", pos="0, 0!", fixedsize=True, width=0.0, height=0.0];
+aux_se [label="", pos="6, 0!", fixedsize=True, width=0.0, height=0.0];
+aux_ne [label="", pos="6, 4!", fixedsize=True, width=0.0, height=0.0];
+Controller -> aux_nw [dir=none];
+Elevator -> aux_sw [dir=none];
+Altimeter -> aux_ne [dir=none];
+"Plane Flying" -> aux_se [dir=none];
+aux_nw -> Elevator;
+aux_sw -> "Plane Flying";
+aux_se -> Altimeter;
+aux_ne -> Controller;
+}
