@@ -1,0 +1,30 @@
+{
+    "controller": {
+        "name": "控制器",
+        "text": "惯导软件，控制飞机飞向某一个坐标",
+        "variables": [
+            "AC",
+            "CK"
+        ],
+        "width": 3.0,
+        "height": 0.8
+    },
+    "actuator": {
+        "name": "执行器",
+        "text": "飞机的飞控系统，控制飞机飞行",
+        "width": 3.0,
+        "height": 0.8
+    },
+    "sensor": {
+        "name": "数据输入",
+        "text": "陀螺仪和加速度计的数据",
+        "width": 3.0,
+        "height": 0.8
+    },
+    "process": {
+        "name": "飞行过程",
+        "text": "",
+        "width": 3.0,
+        "height": 0.8
+    }
+}

@@ -3,45 +3,78 @@ import networkx as nx
 from dataclasses import dataclass, field
 from dataclasses_json import DataClassJsonMixin
 
-# from dataclasses
+DEFAULT_BLOCK_HEIGHT = 0.8
+DEFAULT_BLOCK_WIDTH = 3.0
+
+
+class BlockCommonInterfaces:
+    def get_properties(self):
+        return {}
+
+    def properties_to_label(self):
+        return ""
 
 
 @dataclass
-class Controller(DataClassJsonMixin):
+class Controller(DataClassJsonMixin, BlockCommonInterfaces):
     name: str
     text: str
     variables: list[str] = field(default_factory=lambda: [])
+    width: float = field(default=DEFAULT_BLOCK_WIDTH)
+    height: float = field(default=DEFAULT_BLOCK_HEIGHT)
+
+    def get_properties(self):
+        return
+
+    def properties_to_label(self):
+        return "\n".join(self.variables)
 
 
 @dataclass
-class Actuator(DataClassJsonMixin):
+class Actuator(DataClassJsonMixin, BlockCommonInterfaces):
     name: str
     text: str
+    width: float = field(default=DEFAULT_BLOCK_WIDTH)
+    height: float = field(default=DEFAULT_BLOCK_HEIGHT)
 
 
 @dataclass
-class Sensor(DataClassJsonMixin):
+class Sensor(DataClassJsonMixin, BlockCommonInterfaces):
     name: str
     text: str
+    width: float = field(default=DEFAULT_BLOCK_WIDTH)
+    height: float = field(default=DEFAULT_BLOCK_HEIGHT)
 
 
 @dataclass
-class Process(DataClassJsonMixin):
+class Process(DataClassJsonMixin, BlockCommonInterfaces):
     name: str
     text: str
+    width: float = field(default=DEFAULT_BLOCK_WIDTH)
+    height: float = field(default=DEFAULT_BLOCK_HEIGHT)
 
 
 @dataclass
 class STAMPModel(DataClassJsonMixin):
-    blocks: list[Controller | Actuator | Sensor | Process]
-    connections: list[tuple[str, str]]
+    controller: Controller
+    actuator: Actuator
+    sensor: Sensor
+    process: Process
 
-    def get_first_block(self, type: Type):
-        for block in self.blocks:
-            if isinstance(block, type):
-                return block
+    @classmethod
+    def from_json_file(cls, json_file: str):
+        with open(json_file, "r", encoding="utf-8") as f:
+            return cls.from_json(f.read())
+
+    def get_longest_line_num(self, lines: list[str]):
+        return max(len(line) for line in lines)
+
+    @property
+    def blocks(self):
+        return [self.controller, self.actuator, self.sensor, self.process]
 
     def to_graphviz(self, file_name: str):
+
         ysize = 2
         xsize = 3
         positions = {
@@ -51,6 +84,10 @@ class STAMPModel(DataClassJsonMixin):
             Sensor: f"{xsize*2}, {ysize}!",
         }
         self.graph = nx.DiGraph()
+        FONT_NAME = "SimHei"
+        self.graph.add_node("graph", dpi=600)
+        self.graph.add_node("edge", fontname=FONT_NAME)
+        self.graph.add_node("node", fontname=FONT_NAME)
         self.graph.add_nodes_from([block.name for block in self.blocks])
         aux_blocks = {
             "aux_nw": f"{0}, {ysize*2}!",
@@ -58,10 +95,10 @@ class STAMPModel(DataClassJsonMixin):
             "aux_sw": f"{0}, {0}!",
             "aux_se": f"{xsize*2}, {0}!",
         }
-        controller = self.get_first_block(Controller)
-        actuator = self.get_first_block(Actuator)
-        sensor = self.get_first_block(Sensor)
-        process = self.get_first_block(Process)
+        controller = self.controller
+        actuator = self.actuator
+        sensor = self.sensor
+        process = self.process
         for start, end, props in [
             (controller.name, "aux_nw", {"dir": "none"}),
             ("aux_nw", actuator.name, {}),
@@ -73,6 +110,7 @@ class STAMPModel(DataClassJsonMixin):
             ("aux_ne", controller.name, {}),
         ]:
             self.graph.add_edge(start, end, **props)
+
         # 插入辅助节点，用于连接控制器和传感器等，避免dot中的折线无法识别端口的问题
         for aux_block, aux_block_pos in aux_blocks.items():
             self.graph.add_node(
@@ -86,10 +124,39 @@ class STAMPModel(DataClassJsonMixin):
         # self.graph.add_edges_from(self.connections)
         for block in self.blocks:
             self.graph.nodes[block.name]["label"] = (
-                block.__class__.__name__ + "\n" + block.text
+                block.__class__.__name__
+                + "\n"
+                + block.text
+                + "\n"
+                + block.properties_to_label()
             )
             self.graph.nodes[block.name]["pos"] = positions[block.__class__]
             self.graph.nodes[block.name]["shape"] = "box"
             self.graph.nodes[block.name]["fixedsize"] = True
-            self.graph.nodes[block.name]["width"] = 3
-        nx.nx_pydot.write_dot(self.graph, file_name)
+            self.graph.nodes[block.name]["height"] = (
+                block.height
+                if block.height != DEFAULT_BLOCK_HEIGHT
+                else len(self.graph.nodes[block.name]["label"].splitlines()) * 0.25
+            )
+            print(
+                self.get_longest_line_num(
+                    self.graph.nodes[block.name]["label"].splitlines()
+                )
+            )
+            self.graph.nodes[block.name]["width"] = (
+                block.width
+                if block.width != DEFAULT_BLOCK_WIDTH
+                else (
+                    self.get_longest_line_num(
+                        self.graph.nodes[block.name]["label"].splitlines()
+                    )
+                    * 14.0
+                    * 1.1
+                    / 72
+                )
+            )
+        # self.grap
+
+        P = nx.nx_pydot.to_pydot(self.graph)
+        with open(file_name, "w", encoding="utf-8") as f:
+            f.write(P.to_string())

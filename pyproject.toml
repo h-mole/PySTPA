@@ -1,7 +1,7 @@
 [project]
-name = "uppaal-creator"
+name = "PySTPA"
 version = "0.1.0"
-dependencies = ["pyuppaal", "networkx", "pydot"]
+dependencies = ["networkx", "pydot"]
 requires-python = ">= 3.10"
 
 [tool.autoflake]
