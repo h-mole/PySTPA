@@ -3,8 +3,8 @@
         "name": "控制器",
         "text": "惯导软件，控制飞机飞向某一个坐标",
         "variables": [
-            "AC",
-            "CK"
+            "A",
+            "C"
         ],
         "width": 3.0,
         "height": 0.8
@@ -26,5 +26,12 @@
         "text": "",
         "width": 3.0,
         "height": 0.8
-    }
+    },
+    "signals": [
+        {
+            "source": "控制器",
+            "target": "执行器",
+            "variables": ["A"]
+        }
+    ]
 }

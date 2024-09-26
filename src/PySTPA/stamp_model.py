@@ -55,11 +55,19 @@ class Process(DataClassJsonMixin, BlockCommonInterfaces):
 
 
 @dataclass
+class Signal(DataClassJsonMixin):
+    source: str
+    target: str
+    variables: list[str] = field(default_factory=lambda: [])
+
+
+@dataclass
 class STAMPModel(DataClassJsonMixin):
     controller: Controller
     actuator: Actuator
     sensor: Sensor
     process: Process
+    signals: list[Signal]
 
     @classmethod
     def from_json_file(cls, json_file: str):
@@ -85,7 +93,7 @@ class STAMPModel(DataClassJsonMixin):
         }
         self.graph = nx.DiGraph()
         FONT_NAME = "SimHei"
-        self.graph.add_node("graph", dpi=600)
+        self.graph.add_node("graph")
         self.graph.add_node("edge", fontname=FONT_NAME)
         self.graph.add_node("node", fontname=FONT_NAME)
         self.graph.add_nodes_from([block.name for block in self.blocks])
@@ -110,7 +118,16 @@ class STAMPModel(DataClassJsonMixin):
             ("aux_ne", controller.name, {}),
         ]:
             self.graph.add_edge(start, end, **props)
-
+        print(self.signals)
+        for signal in self.signals:
+            if signal.source in {controller.name, process.name}:
+                src, dst = list(self.graph.out_edges(signal.source))[0]
+                self.graph.edges[src, dst]["label"] = "\n".join(signal.variables)
+            elif signal.target in {controller.name, process.name}:
+                src, dst = list(self.graph.in_edges(signal.target))[0]
+                self.graph.edges[src, dst]["label"] = "\n".join(signal.variables)
+            else:
+                raise NotImplementedError(f"Unknown signal source or destination {signal}")
         # 插入辅助节点，用于连接控制器和传感器等，避免dot中的折线无法识别端口的问题
         for aux_block, aux_block_pos in aux_blocks.items():
             self.graph.add_node(
